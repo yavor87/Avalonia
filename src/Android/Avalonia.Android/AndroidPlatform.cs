@@ -13,6 +13,8 @@ using Avalonia.Rendering;
 using Avalonia.Shared.PlatformSupport;
 using Avalonia.Skia;
 
+[assembly: ExportWindowingSubsystem(OperatingSystemType.Android, 1, "Android", typeof(AndroidPlatform), nameof(AndroidPlatform.Initialize))]
+
 namespace Avalonia
 {
     public static class AndroidApplicationExtensions

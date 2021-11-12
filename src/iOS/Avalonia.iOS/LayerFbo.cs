@@ -32,8 +32,8 @@ namespace Avalonia.iOS
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, fb);
             GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer,  rb);
             context.RenderBufferStorage((uint) All.Renderbuffer, layer);
-            
-            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferSlot.ColorAttachment0, RenderbufferTarget.Renderbuffer, rb);
+
+            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, RenderbufferTarget.Renderbuffer, rb);
 
             int w;
             int h;
@@ -44,7 +44,7 @@ namespace Avalonia.iOS
             
             //GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, depthBuffer);
             //GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, RenderbufferInternalFormat.DepthComponent16, w, h);
-            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferSlot.DepthAttachment, RenderbufferTarget.Renderbuffer, depthBuffer);
+            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, RenderbufferTarget.Renderbuffer, depthBuffer);
 
             var frameBufferError = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
             if(frameBufferError != FramebufferErrorCode.FramebufferComplete)

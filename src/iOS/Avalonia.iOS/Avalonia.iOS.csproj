@@ -1,24 +1,15 @@
-<Project>
-  <Import Project="Sdk.props" Sdk="MSBuild.Sdk.Extras" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>xamarin.ios10</TargetFramework>
+    <TargetFramework>net6.0-ios</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>latest</LangVersion>
+    <SupportedOSPlatformVersion>14.2</SupportedOSPlatformVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Update="Boilerplate\Shared.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Update="Boilerplate\RuntimePlatform.cs">
-      <SubType>Code</SubType>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="OpenTK-1.0" />
+    <PackageReference Include="OpenTK.Graphics" Version="4.6.7" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\packages\Avalonia\Avalonia.csproj" />
     <ProjectReference Include="..\..\Skia\Avalonia.Skia\Avalonia.Skia.csproj" />
   </ItemGroup>
-  <Import Project="Sdk.targets" Sdk="MSBuild.Sdk.Extras" />
+  <Import Project="..\..\Shared\PlatformSupport\PlatformSupport.projitems" Label="Shared" />
 </Project>

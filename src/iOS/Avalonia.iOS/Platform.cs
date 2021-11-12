@@ -19,7 +19,7 @@ namespace Avalonia.iOS
             public TimeSpan DoubleClickTime { get; } = TimeSpan.FromMilliseconds(500);
         }
         
-        public static void Register()
+        public static void Initialize()
         {
             GlFeature ??= new EaglFeature();
             Timer ??= new DisplayLinkTimer();

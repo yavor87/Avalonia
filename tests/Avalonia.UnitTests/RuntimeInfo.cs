@@ -6,9 +6,9 @@ using System.Text;
 
 namespace Avalonia.Shared.PlatformSupport
 {
-    internal partial class StandardRuntimePlatform : IRuntimePlatform
+    internal partial class TestRuntimePlatform : StandardRuntimePlatform
     {
-        public RuntimePlatformInfo GetRuntimeInfo()
+        public override RuntimePlatformInfo GetRuntimeInfo()
         {
             return new RuntimePlatformInfo();
         }

@@ -193,7 +193,7 @@ namespace Avalonia.UnitTests
     public class AppBuilder : AppBuilderBase<AppBuilder>
     {
         public AppBuilder()
-            : base(new StandardRuntimePlatform(),
+            : base(new TestRuntimePlatform(),
                   builder => StandardRuntimePlatformServices.Register(builder.Instance?.GetType()
                       ?.GetTypeInfo().Assembly))
         {

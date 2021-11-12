@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -8,7 +7,7 @@ using Avalonia.Platform;
 
 namespace Avalonia.Shared.PlatformSupport
 {
-    internal partial class StandardRuntimePlatform : IRuntimePlatform
+    internal class StandardRuntimePlatform : IRuntimePlatform
     {
         public IDisposable StartSystemTimer(TimeSpan interval, Action tick)
         {
@@ -124,7 +123,7 @@ namespace Avalonia.Shared.PlatformSupport
         
         
         
-#if NET461 || NETCOREAPP2_0
+#if NET461 || NETCOREAPP2_0_OR_GREATER
         [DllImport("libc", SetLastError = true)]
         private static extern IntPtr mmap(IntPtr addr, IntPtr length, int prot, int flags, int fd, IntPtr offset);
         [DllImport("libc", SetLastError = true)]
@@ -169,5 +168,51 @@ namespace Avalonia.Shared.PlatformSupport
         IntPtr Alloc(int size) => Marshal.AllocHGlobal(size);
         void Free(IntPtr ptr, int len) => Marshal.FreeHGlobal(ptr);
 #endif
+
+        private static readonly Lazy<RuntimePlatformInfo> Info = new Lazy<RuntimePlatformInfo>(() =>
+        {
+            OperatingSystemType os;
+
+#if NET5_0_OR_GREATER
+            if (OperatingSystem.IsWindows())
+                os = OperatingSystemType.WinNT;
+            else if (OperatingSystem.IsMacOS())
+                os = OperatingSystemType.OSX;
+            else if (OperatingSystem.IsLinux())
+                os = OperatingSystemType.Linux;
+            else if (OperatingSystem.IsAndroid())
+                os = OperatingSystemType.Android;
+            else if (OperatingSystem.IsIOS())
+                os = OperatingSystemType.iOS;
+            else
+                throw new Exception("Unknown OS platform " + RuntimeInformation.OSDescription);
+#else
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                os = OperatingSystemType.OSX;
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                os = OperatingSystemType.Linux;
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                os = OperatingSystemType.WinNT;
+            else
+                throw new Exception("Unknown OS platform " + RuntimeInformation.OSDescription);
+#endif
+
+            return new RuntimePlatformInfo
+            {
+#if NETCOREAPP
+                IsCoreClr = true,
+#elif NETFRAMEWORK
+                IsDotNetFramework = false,
+#endif
+                IsDesktop = os != OperatingSystemType.Android && os != OperatingSystemType.iOS,
+                IsMono = os == OperatingSystemType.Android || os == OperatingSystemType.iOS,
+                IsMobile = os == OperatingSystemType.Android || os == OperatingSystemType.iOS,
+                IsUnix = os != OperatingSystemType.WinNT,
+                OperatingSystem = os,
+            };
+        });
+
+
+        public virtual RuntimePlatformInfo GetRuntimeInfo() => Info.Value;
     }
 }

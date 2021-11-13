@@ -1,11 +1,11 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Platform;
+using Avalonia.MicroCom;
 using Avalonia.Win32.Interop;
+using Avalonia.Win32.Win32Com;
 
 namespace Avalonia.Win32
 {
@@ -23,80 +23,74 @@ namespace Avalonia.Win32
 
                 Guid clsid = dialog is OpenFileDialog ? UnmanagedMethods.ShellIds.OpenFileDialog : UnmanagedMethods.ShellIds.SaveFileDialog;
                 Guid iid = UnmanagedMethods.ShellIds.IFileDialog;
-                UnmanagedMethods.CoCreateInstance(ref clsid, IntPtr.Zero, 1, ref iid, out object unk);
-                var frm = (UnmanagedMethods.IFileDialog)unk;
+
+                var frm = UnmanagedMethods.CreateInstance<IFileDialog>(ref clsid, ref iid);
 
                 var openDialog = dialog as OpenFileDialog;
 
-                uint options;
-                frm.GetOptions(out options);
-                options |= (uint)(DefaultDialogOptions);
+                //ref uint options = null;
+                //frm.GetOptions(options);
+                //options |= (uint)(DefaultDialogOptions);
+                //if (openDialog?.AllowMultiple == true)
+                //    options |= (uint)UnmanagedMethods.FOS.FOS_ALLOWMULTISELECT;
+                //frm.SetOptions(options);
+
+                //var defaultExtension = (dialog as SaveFileDialog)?.DefaultExtension ?? "";
+                //frm.SetDefaultExtension(defaultExtension);
+                //frm.SetFileName(dialog.InitialFileName ?? "");
+                //frm.SetTitle(dialog.Title ?? "");
+
+                //var filters = new List<UnmanagedMethods.COMDLG_FILTERSPEC>();
+                //if (dialog.Filters != null)
+                //{
+                //    foreach (var filter in dialog.Filters)
+                //    {
+                //        var extMask = string.Join(";", filter.Extensions.Select(e => "*." + e));
+                //        filters.Add(new UnmanagedMethods.COMDLG_FILTERSPEC { pszName = filter.Name, pszSpec = extMask });
+                //    }
+                //}
+                //if (filters.Count == 0)
+                //    filters.Add(new UnmanagedMethods.COMDLG_FILTERSPEC { pszName = "All files", pszSpec = "*.*" });
+                //var filtersArr = filters.ToArray();
+                //fixed (void* fixedAr = filtersArr)
+                //frm.SetFileTypes((ushort)filters.Count, filters.ToArray());
+                //frm.SetFileTypeIndex(0);
+
+                //if (dialog.Directory != null)
+                //{
+                //    IShellItem directoryShellItem;
+                //    Guid riid = UnmanagedMethods.ShellIds.IShellItem;
+                //    if (UnmanagedMethods.SHCreateItemFromParsingName(dialog.Directory, IntPtr.Zero, ref riid, out directoryShellItem) == (uint)UnmanagedMethods.HRESULT.S_OK)
+                //    {
+                //        frm.SetFolder(directoryShellItem);
+                //        frm.SetDefaultFolder(directoryShellItem);
+                //    }
+                //}
+
+                frm.Show(hWnd);
                 if (openDialog?.AllowMultiple == true)
-                    options |= (uint)UnmanagedMethods.FOS.FOS_ALLOWMULTISELECT;
-                frm.SetOptions(options);
-
-                var defaultExtension = (dialog as SaveFileDialog)?.DefaultExtension ?? "";
-                frm.SetDefaultExtension(defaultExtension);
-                frm.SetFileName(dialog.InitialFileName ?? "");
-                frm.SetTitle(dialog.Title ?? "");
-
-                var filters = new List<UnmanagedMethods.COMDLG_FILTERSPEC>();
-                if (dialog.Filters != null)
                 {
-                    foreach (var filter in dialog.Filters)
+                    using var fileOpenDialog = frm.QueryInterface<IFileOpenDialog>();
+                    var shellItemArray = fileOpenDialog.Results;
+                    var count = shellItemArray.Count;
+                    result = new string[count];
+                    for (int i = 0; i < count; i++)
                     {
-                        var extMask = string.Join(";", filter.Extensions.Select(e => "*." + e));
-                        filters.Add(new UnmanagedMethods.COMDLG_FILTERSPEC { pszName = filter.Name, pszSpec = extMask });
+                        var shellItem = shellItemArray.GetItemAt(i);
+                        result[i] = GetAbsoluteFilePath(shellItem);
                     }
                 }
-                if (filters.Count == 0)
-                    filters.Add(new UnmanagedMethods.COMDLG_FILTERSPEC { pszName = "All files", pszSpec = "*.*" });
-
-                frm.SetFileTypes((uint)filters.Count, filters.ToArray());
-                frm.SetFileTypeIndex(0);
-
-                if (dialog.Directory != null)
+                else
                 {
-                    UnmanagedMethods.IShellItem directoryShellItem;
-                    Guid riid = UnmanagedMethods.ShellIds.IShellItem;
-                    if (UnmanagedMethods.SHCreateItemFromParsingName(dialog.Directory, IntPtr.Zero, ref riid, out directoryShellItem) == (uint)UnmanagedMethods.HRESULT.S_OK)
-                    {
-                        frm.SetFolder(directoryShellItem);
-                        frm.SetDefaultFolder(directoryShellItem);
-                    }
-                }
-
-                if (frm.Show(hWnd) == (uint)UnmanagedMethods.HRESULT.S_OK)
-                {
-                    if (openDialog?.AllowMultiple == true)
-                    {
-                        UnmanagedMethods.IShellItemArray shellItemArray;
-                        ((UnmanagedMethods.IFileOpenDialog)frm).GetResults(out shellItemArray);
-                        uint count;
-                        shellItemArray.GetCount(out count);
-                        result = new string[count];
-                        for (uint i = 0; i < count; i++)
-                        {
-                            UnmanagedMethods.IShellItem shellItem;
-                            shellItemArray.GetItemAt(i, out shellItem);
-                            result[i] = GetAbsoluteFilePath(shellItem);
-                        }
-                    }
-                    else
-                    {
-                        UnmanagedMethods.IShellItem shellItem;
-                        if (frm.GetResult(out shellItem) == (uint)UnmanagedMethods.HRESULT.S_OK)
-                        {
-                            result = new string[] { GetAbsoluteFilePath(shellItem) };
-                        }
-                    }
+                    var shellItem = frm.Result;
+                    result = new string[] { GetAbsoluteFilePath(shellItem) };
                 }
 
                 return result;
             });
         }
 
-        public Task<string> ShowFolderDialogAsync(OpenFolderDialog dialog, Window parent)
+        public unsafe Task<string> ShowFolderDialogAsync(OpenFolderDialog dialog, Window parent)
         {
             return Task.Factory.StartNew(() =>
             {
@@ -106,17 +100,16 @@ namespace Avalonia.Win32
                 Guid clsid = UnmanagedMethods.ShellIds.OpenFileDialog;
                 Guid iid = UnmanagedMethods.ShellIds.IFileDialog;
 
-                UnmanagedMethods.CoCreateInstance(ref clsid, IntPtr.Zero, 1, ref iid, out object unk);
-                var frm = (UnmanagedMethods.IFileDialog)unk;
-                uint options;
-                frm.GetOptions(out options);
-                options |= (uint)(UnmanagedMethods.FOS.FOS_PICKFOLDERS | DefaultDialogOptions);
+                var frm = UnmanagedMethods.CreateInstance<IFileDialog>(ref clsid, ref iid);
+
+                var options = frm.Options; // <-- fails
+                options = (uint)(UnmanagedMethods.FOS.FOS_PICKFOLDERS | DefaultDialogOptions);
                 frm.SetOptions(options);
-                frm.SetTitle(dialog.Title ?? "");
+                // frm.SetTitle(dialog.Title ?? "");
 
                 if (dialog.Directory != null)
                 {
-                    UnmanagedMethods.IShellItem directoryShellItem;
+                    IShellItem directoryShellItem;
                     Guid riid = UnmanagedMethods.ShellIds.IShellItem;
                     if (UnmanagedMethods.SHCreateItemFromParsingName(dialog.Directory, IntPtr.Zero, ref riid, out directoryShellItem) == (uint)UnmanagedMethods.HRESULT.S_OK)
                     {
@@ -126,7 +119,7 @@ namespace Avalonia.Win32
 
                 if (dialog.Directory != null)
                 {
-                    UnmanagedMethods.IShellItem directoryShellItem;
+                    IShellItem directoryShellItem;
                     Guid riid = UnmanagedMethods.ShellIds.IShellItem;
                     if (UnmanagedMethods.SHCreateItemFromParsingName(dialog.Directory, IntPtr.Zero, ref riid, out directoryShellItem) == (uint)UnmanagedMethods.HRESULT.S_OK)
                     {
@@ -134,34 +127,28 @@ namespace Avalonia.Win32
                     }
                 }
 
-                if (frm.Show(hWnd) == (uint)UnmanagedMethods.HRESULT.S_OK)
+                frm.Show(hWnd);
+                if (frm.Result is not null)
                 {
-                    UnmanagedMethods.IShellItem shellItem;
-                    if (frm.GetResult(out shellItem) == (uint)UnmanagedMethods.HRESULT.S_OK)
-                    {
-                        result = GetAbsoluteFilePath(shellItem);
-                    }
+                    result = GetAbsoluteFilePath(frm.Result);
                 }
 
                 return result;
             });
         }
 
-        private string GetAbsoluteFilePath(UnmanagedMethods.IShellItem shellItem)
+        private unsafe string GetAbsoluteFilePath(IShellItem shellItem)
         {
-            IntPtr pszString;
-            if (shellItem.GetDisplayName(UnmanagedMethods.SIGDN_FILESYSPATH, out pszString) == (uint)UnmanagedMethods.HRESULT.S_OK)
+            IntPtr pszString = new IntPtr(shellItem.GetDisplayName(UnmanagedMethods.SIGDN_FILESYSPATH));
+            if (pszString != IntPtr.Zero)
             {
-                if (pszString != IntPtr.Zero)
+                try
                 {
-                    try
-                    {
-                        return Marshal.PtrToStringAuto(pszString);
-                    }
-                    finally
-                    {
-                        Marshal.FreeCoTaskMem(pszString);
-                    }
+                    return Marshal.PtrToStringAuto(pszString);
+                }
+                finally
+                {
+                    Marshal.FreeCoTaskMem(pszString);
                 }
             }
             return default;

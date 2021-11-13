@@ -117,7 +117,7 @@ namespace ControlCatalog.NetCore
                     EnableMultitouch = true
                 })
                 .UseSkia()
-                .UseManagedSystemDialogs()
+                //.UseManagedSystemDialogs()
                 .LogToTrace();
 
         static void SilenceConsole()

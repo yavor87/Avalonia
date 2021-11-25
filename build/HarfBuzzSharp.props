@@ -2,5 +2,7 @@
   <ItemGroup>
     <PackageReference Include="HarfBuzzSharp" Version="2.8.2-preview.155" />
     <PackageReference Condition="'$(IncludeLinuxSkia)' == 'true'" Include="HarfBuzzSharp.NativeAssets.Linux" Version="2.8.2-preview.155" />
+    <PackageReference Condition="'$(IncludeIosSkia)' == 'true'" Include="HarfBuzzSharp.NativeAssets.iOS" Version="2.8.2-preview.155" />
+    <PackageReference Condition="'$(IncludeAndroidSkia)' == 'true'" Include="HarfBuzzSharp.NativeAssets.Android" Version="2.8.2-preview.155" />
   </ItemGroup>
 </Project>

@@ -21,4 +21,6 @@
     <ProjectReference Include="..\..\Skia\Avalonia.Skia\Avalonia.Skia.csproj" />
   </ItemGroup>
   <Import Project="Sdk.targets" Sdk="MSBuild.Sdk.Extras" />
+  <Import Project="..\..\..\build\HarfBuzzSharp.props" />
+  <Import Project="..\..\..\build\System.Memory.props" />
 </Project>
